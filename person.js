@@ -13,9 +13,10 @@ function Person(game, mom, dad, x, y) {
     this.listOfChildren = [];
     this.maxChildren = Math.floor(Math.random() * 4);
     this.radar = 200;
-    this.reproductionWait = 0
+    this.reproductionWait = 0;
     this.radius = 15;
     this.visualRadius = 500;
+    this.id = null;
     this.velocity = { x: (Math.random() * 1000) + 1000, y: (Math.random() * 1000) + 1000 };
     var speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
     if (speed > maxSpeed) {
@@ -51,7 +52,7 @@ Person.prototype.collide = function (other) {
 Person.prototype.matingOccured = function (other) {
     if (this.isAlive && other.isAlive && !this.isTerminallyIll && !other.isTerminallyIll
         && this.hasMatured && other.hasMatured) { // checks in case other dies right at collision
-        if (!this.parents[0].listOfChildren.includes(other)) {//we dont support incest
+        if (this.parents[0] == null || !this.parents[0].listOfChildren.includes(other)) {//we dont support incest
             if ((!this.hasPartner && !other.hasPartner && !(this.gender === other.gender))) {
                 if (this.gender === "female") {
                     this.produceChild(other);
@@ -276,13 +277,13 @@ Person.prototype.update = function () {
         this.reproductionWait++;
     }
 //FUN PARTNER DETECTION STUFF
-    if (this.hasPartner && distance(this, this.partner) > this.radius * 10 && this.gender === "male") {
+    /*if (this.hasPartner && distance(this, this.partner) > this.radius * 10 && this.gender === "male") {
         this.velocity.x = this.partner.x - this.x * 0.5;
         this.velocity.y = this.partner.y - this.y * 0.5;
     } else if (this.hasPartner && distance(this, this.partner) > this.radius * 5 && this.gender === "female") {
         this.velocity.x = this.partner.x - this.x * 0.5;
         this.velocity.y = this.partner.y - this.y * 0.5;
-    }
+    }*/
 
     this.velocity.x -= (1 - friction) * this.game.clockTick * this.velocity.x;
     this.velocity.y -= (1 - friction) * this.game.clockTick * this.velocity.y;

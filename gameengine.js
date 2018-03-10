@@ -2,13 +2,13 @@
 
 window.requestAnimFrame = (function () {
     return window.requestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.mozRequestAnimationFrame ||
-            window.oRequestAnimationFrame ||
-            window.msRequestAnimationFrame ||
-            function (/* function */ callback, /* DOMElement */ element) {
-                window.setTimeout(callback, 1000 / 60);
-            };
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function (/* function */ callback, /* DOMElement */ element) {
+            window.setTimeout(callback, 1000 / 60);
+        };
 })();
 
 
@@ -133,6 +133,120 @@ GameEngine.prototype.loop = function () {
     this.click = null;
     this.rightclick = null;
     this.wheel = null;
+}
+
+GameEngine.prototype.save = function () {
+    var rtn = [];
+    let id = 0;
+    for (var i = 0; i < this.entities.length; i++) {
+        var ent = this.entities[i];
+        if (ent.id == null) {
+            ent.id = id++;
+        }
+        //partner
+        if (ent.hasPartner && ent.partner && ent.partner.id == null) {
+            ent.partner.id = id++;
+        }
+        //parents
+        if (ent.parents[0] != null && ent.parents[1] != null) {
+            if(ent.parents[0].id == null) {
+                ent.parents[0].id = id++;
+            }
+            if( ent.parents[1].id == null) {
+                ent.parents[1].id = id++;
+            }
+        }
+        //children
+        for (var j = 0; j < ent.listOfChildren.length; j++) {
+            var child = ent.listOfChildren[j];
+            if (child.id == null) {
+                child.id = id++;
+            }
+        }
+        var entry = {
+            //TODO set all of the other properties.
+            id: ent.id,
+            gender: ent.gender,
+            age: ent.age,
+            maxAge: ent.maxAge,
+            hasMatured: ent.hasMatured,
+            hasPartner: ent.hasPartner,
+            partnerId: ent.partner ? ent.partner.id : null,
+            children: ent.listOfChildren.map(x => x.id),
+            parents: ent.parents[0] ? ent.parents.map(x => x.id) : null,
+            colors: ent.colors,
+            isAlive: ent.isAlive,
+            isTerminallyIll: ent.isTerminallyIll,
+            deathCountdown: ent.deathCountdown,
+            maxChildren: ent.maxChildren,
+            radar: ent.radar,
+            reproductionWait: ent.reproductionWait,
+            radius: ent.radius,
+            visualRadius: ent.visualRadius,
+            velocity: ent.velocity,
+            x: ent.x,
+            y: ent.y,
+            removeFromWorld: ent.removeFromWorld
+        }
+        rtn.push(entry);
+    }
+    return rtn;
+}
+
+GameEngine.prototype.load = function (loadedEntities) {
+    this.entities = [];
+    //make the entity
+    for (var i = 0; i < loadedEntities.length; i++) {
+        var ent = loadedEntities[i];
+        var person;
+        if (ent.gender == "male") {
+            person = new Male(this, null, null, 0, 0);
+        } else {
+            person = new Female(this, null, null, 0, 0);
+        }
+        person.listOfChildren = ent.children;
+        person.partner = ent.partnerId;
+        person.id = ent.id;
+        person.parents = ent.parents ? ent.parents : person.parents;
+        person.gender = ent.gender;
+        person.age = ent.age
+        person.maxAge = ent.maxAge
+        person.hasMatured = ent.hasMatured
+        person.hasPartner = ent.hasPartner
+        person.colors = ent.colors;
+        person.isAlive = ent.isAlive;
+        person.isTerminallyIll = ent.isTerminallyIll;
+        person.deathCountdown = ent.deathCountdown;
+        person.maxChildren = ent.maxChildren;
+        person.radar = ent.radar;
+        person.reproductionWait = ent.reproductionWait;
+        person.radius = ent.radius;
+        person.visualRadius = ent.visualRadius;
+        person.id = ent.id;
+        person.velocity = ent.velocity;
+        person.x = ent.x;
+        person.y = ent.y;
+        this.addEntity(person);
+    }
+
+    //add the references to the newly created objects
+    for (var i = 0; i < this.entities.length; i++) {
+        var entity = this.entities[i];
+        if (entity.hasPartner) {
+            entity.partner = this.entities.find(x => x.id == entity.partner);
+        }
+        if (entity.parents && entity.parents.length > 0) {
+            entity.parents[0] = this.entities.find(x => x.id == entity.parents[0]);
+            entity.parents[1] = this.entities.find(x => x.id == entity.parents[1]);
+        }
+        for (var j = 0; j < entity.listOfChildren.length; j++) {
+            entity.listOfChildren[j] = this.entities.find(x => x.id == entity.listOfChildren[j]);
+        }
+    }
+    //remove ids for later saving
+    for (var i = 0; i < this.entities.length; i++) {
+        this.entities[i].id = null;
+    }
 }
 
 function Entity(game, x, y) {
